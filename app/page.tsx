@@ -58,6 +58,7 @@ function LoginPage() {
         password: password,
       });
       if (error) {
+        console.error(error);
         toast({
           variant: "destructive",
           title: "에러가 발생했습니다.",
@@ -88,6 +89,7 @@ function LoginPage() {
         setUser(userData);
       }
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "에러가 발생했습니다.",

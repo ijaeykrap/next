@@ -83,6 +83,7 @@ function SignUpPage() {
         router.push("/"); //로그인 페이지로 이동
       }
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "에러가 발생했습니다.",

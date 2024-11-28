@@ -17,11 +17,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className={FONT_NOTOSANSKR.className}>
-        <div className="page">
-          <main className="page__main">{children}</main>
-        </div>
+        {children}
         <Toaster />
       </body>
     </html>

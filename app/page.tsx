@@ -1,101 +1,203 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { userAtom } from "@/stores/atoms";
+import { useAtom } from "jotai";
+import useEmailCheck from "@/hooks/use-email";
+/* UI 컴포넌트 */
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+} from "@/components/ui";
+import { Eye, EyeOff } from "lucide-react";
+import { FindPasswordPopup } from "@/components/common";
+
+function LoginPage() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const { checkEmail } = useEmailCheck();
+  /* 회원가입에 필요한 상태 값 */
+  const [user, setUser] = useAtom(userAtom);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  /* 비밀번호 show toggle */
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const togglePassword = () => setShowPassword((prevState) => !prevState);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      toast({
+        variant: "destructive",
+        title: "기입되지 않은 데이터가 있습니다.",
+        description: "이메일과 비밀번호를 입력해주세요",
+      });
+      return; //필수 값이 입력되지 않은 경우, 추가 작업 없이 종료
+    }
+    if (!checkEmail(email)) {
+      toast({
+        variant: "destructive",
+        title: "올바르지 않은 이메일 양식입니다.",
+        description: "올바른 이메일 양식을 작성해주세요!",
+      });
+      return;
+    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "에러가 발생했습니다.",
+          description: `Supabase 오류: ${error.message || "알 수 없는 오류"}`,
+        });
+      }
+      //console.log(data);
+      else if (data) {
+        toast({
+          title: "로그인 완료!",
+          description: "로그인이 완료되었습니다. 자유롭게 TASK 관리를 해주세요",
+        });
+
+        /* 쿠키에 저장할 user 데이터 */
+        const userData = {
+          id: data.user?.id || "",
+          email: data.user?.email || "",
+          phoneNumber: data.user?.user_metadata.phoneNumber || "",
+          nickname: data.user?.user_metadata.nickname || "",
+          //닉네임이랑 핸드폰 번호 추가
+          imgUrl: "/assets/images/profile.jpg",
+        };
+        document.cookie = `user=${JSON.stringify(
+          userData
+        )}; path=/; max-age=3600`; //1시간 동안 유효
+
+        /* jotai의 user에 관련된 상태 업데이트 */
+        setUser(userData);
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "에러가 발생했습니다.",
+        description: "에러가 발생했습니다 개발자 도구 창을 확인하세오",
+      });
+    }
+    router.push("/board"); //TODO BOARD 페이지로 이동
+  };
+
+  /* 로컬스토리지에 user 데이터 유무 체크 후 리다이렉션 */
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) router.push("/board");
+  }, [router]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="page">
+      <div className="page__container">
+        {/* 소개 문구 */}
+        <div className="flex flex-col items-center mt-10">
+          <h4 className="text-lg font-semibold">안녕하세요 👋🏻</h4>
+          <div className="flex flex-col items-center justify-center mt-2 mb-4">
+            <div className="text-sm text-muted-foreground">
+              <small className="text-sm text-[#e79057] font-medium leading-none">
+                TASK 관리 앱
+              </small>
+              에 방문해주셔서 감사합니다.
+            </div>
+            <p className="text-sm text-muted-foreground">
+              서비스를 이용하려면 로그인을 진행해주세요.
+            </p>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <Card className="w-[400px]">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">로그인</CardTitle>
+            <CardDescription>
+              로그인을 위한 정보를 입력해주세요.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            <div className="grid gap-2">
+              <Label htmlFor="email">이메일</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="이메일을 입력하세요."
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+            </div>
+            <div className="relative grid gap-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">비밀번호</Label>
+                <FindPasswordPopup>
+                  <p className="ml-auto inline-block text-sm underline cursor-pointer">
+                    비밀번호를 잊으셨나요?
+                  </p>
+                </FindPasswordPopup>
+              </div>
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="비밀번호를 입력하세요."
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              <Button
+                size={"icon"}
+                className="absolute top-[38px] right-2 -translate-y-1/4 bg-transparent hover:bg-transparent"
+                onClick={togglePassword}
+              >
+                {showPassword ? (
+                  <Eye className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <EyeOff className="h-5 w-5 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+          </CardContent>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t"></span>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          <CardFooter className="flex flex-col mt-6">
+            <Button
+              className="w-full text-white bg-[#E79057] hover:bg-[#E26F24] hover:ring-1 hover:ring-[#E26F24] hover:ring-offset-1 active:bg-[#D5753D] hover:shadow-lg"
+              onClick={handleLogin}
+            >
+              로그인
+            </Button>
+            <div className="mt-4 text-center text-sm">
+              계정이 없으신가요?
+              <Link href={"/signup"} className="underline text-sm ml-1">
+                회원가입
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
+
+export default LoginPage;

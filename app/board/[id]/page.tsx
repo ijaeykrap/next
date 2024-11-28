@@ -78,6 +78,7 @@ function BoardDetailPage() {
       }
 
       if (error) {
+        console.error(error);
         toast({
           variant: "destructive",
           title: "에러가 발생했습니다.",

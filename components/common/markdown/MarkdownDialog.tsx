@@ -59,6 +59,7 @@ function MarkdownDialog({ children, board }: Props) {
       updateBoards(Number(id), "boards", newBoards);
       handleCloseDialog();
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "에러가 발생하였습니다.",

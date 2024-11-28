@@ -40,6 +40,7 @@ function FindPasswordPopup({ children }: Props) {
           "이메일 주소로 비밀번호 초기화 링크를 전송했으니, 이메일을 확인하여 비밀번호를 변경하세요!",
       });
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "네트워크 오류",

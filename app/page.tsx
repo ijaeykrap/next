@@ -28,7 +28,7 @@ function LoginPage() {
   const router = useRouter();
   const { checkEmail } = useEmailCheck();
   /* 회원가입에 필요한 상태 값 */
-  const [user, setUser] = useAtom(userAtom);
+  const [, setUser] = useAtom(userAtom);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   /* 비밀번호 show toggle */

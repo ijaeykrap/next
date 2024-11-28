@@ -72,6 +72,7 @@ function EditProfilePopup({ children }: Props) {
         }
       }
     } catch (error) {
+      console.error(error);
       toast({
         variant: "destructive",
         title: "네트워크 오류",

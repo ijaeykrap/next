@@ -28,7 +28,7 @@ interface Props {
 
 function MarkdownDialog({ children, board }: Props) {
   const { toast } = useToast();
-  const [task, setTask] = useAtom(taskAtom);
+  const [task] = useAtom(taskAtom);
   const updateBoards = useCreateBoard();
   const { id } = useParams();
   /* 상태값 선언 */
